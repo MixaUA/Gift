@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Зі святом!</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <header>
+                <img src="media/Vika.png" alt="Віка" class="main-image">
+            </header>
+            
+            <main>
+                <div class="audio-player">
+                    <button id="playPauseBtn" class="play-btn">НАТИСНИ</button>
+                    <div class="progress-container">
+                        <div id="progress" class="progress-bar"></div>
+                    </div>
+                </div>
+
+                <div class="text-field">
+                    <blockquote class="quote">
+                        "Коли ми кохаємо, ми завжди прагнемо стати кращими, ніж ми є."
+                        <cite>— Пауло Коельйо</cite>
+                    </blockquote>
+                    <p id="greetingText">
+                        Є слова, що, мов подих вітру, торкаються тіла — обтікають його, залишаючи ледь відчутні мурахи, які тихо проникають під шкіру і, спіймані нервовими закінченнями, розчиняються у чаші спокою й задоволення.<br><br>
+                        А є слова, що безжально пронизують холодом наскрізь, відлунюючи в кінчиках пальців адреналіновим тремором.<br><br>
+                        Нехай на твоєму шляху звучать лише перші — теплі й ніжні. Нехай тебе супроводжує легкий вітерець, і оминають бурі.<br><br>
+                        З днем народження, крихітко!
+                    </p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <audio id="giftAudio" src="media/Gift_audio.mp3"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>

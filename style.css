@@ -3,7 +3,7 @@
     --secondary-color: #ffb3c1;
     --accent-color: #fb6f92;
     --text-color: #4a4a4a;
-    --bg-break: #ede0d4; /* Колір для розриву лінії, підібраний під фон */
+    --bg-break: #ede1d4; /* Під фон для розриву лінії */
     --bg-gradient: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
 }
 
@@ -61,10 +61,8 @@ header { margin-bottom: 50px; }
     color: #000;
     font-weight: 600;
     letter-spacing: 2px;
-    transition: 0.3s ease;
+    transition: 0.3s;
 }
-
-.play-btn:hover { background: rgba(0, 0, 0, 0.05); }
 
 .playing { animation: pulse 1.5s infinite ease-in-out; }
 
@@ -86,32 +84,33 @@ header { margin-bottom: 50px; }
     height: 100%;
     background: #000;
     width: 0%;
-    transition: width 0.1s linear;
 }
 
-/* Typography & Quote */
+/* Typography */
 .text-field {
     margin-top: 20px;
     text-align: left;
 }
 
-.intro-text {
+.base-text {
+    font-size: 1.05rem;
+    font-weight: 400; /* Звичайна вага для всього тексту */
     line-height: 1.6;
-    margin-bottom: 20px;
+    color: #000;
 }
 
 .blockquote-6 {
     border-left: 6px solid #000;
-    font-size: 16px;
+    font-size: 1.05rem;
     font-style: italic;
-    margin: 25px 16px;
-    padding: 16px 24px;
+    font-weight: 700; /* Робимо текст цитати жирнішим */
+    margin: 30px 15px;
+    padding: 15px 25px;
     position: relative;
     line-height: 1.6;
-    color: #333;
 }
 
-/* Розрив лінії */
+/* Ефект розриву лінії */
 .blockquote-6:before {
     content: "";
     position: absolute;
@@ -137,20 +136,12 @@ header { margin-bottom: 50px; }
     margin-top: -12px;
 }
 
-#greetingText {
-    font-size: 1.1rem;
+.final-wish {
+    display: block;
     font-weight: 700;
-    line-height: 1.6;
-    color: #000;
-    animation: fadeIn 2s ease-in;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    margin-top: 10px;
 }
 
 @media (max-width: 400px) {
-    #greetingText { font-size: 1rem; }
-    .blockquote-6 { margin: 25px 10px; }
+    .base-text, .blockquote-6 { font-size: 1rem; }
 }

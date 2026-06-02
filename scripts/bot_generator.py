@@ -4,6 +4,7 @@ import re
 import logging
 import time
 import requests
+from datetime import datetime
 
 # Конфігурація логування
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -28,7 +29,7 @@ def init_files():
 
 # Каскад моделей
 GEMINI_MODELS = [
-    "gemini-2.0-flash", # Оновлена актуальна основна
+    "gemini-2.0-flash", 
     "gemini-2.5-flash",
     "gemini-2.5-flash-lite",
     "gemini-2.0-flash-lite",
@@ -48,9 +49,11 @@ def save_data(data):
     with open(CONTENT_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-def call_gemini(prompt):
+def call_gemini(prompt, force_json=False):
     """Виклик Gemini з каскадом моделей та обробкою лімітів."""
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    if force_json:
+        payload["generationConfig"] = {"responseMimeType": "application/json"}
     
     for model_id in GEMINI_MODELS:
         url = f"{GEMINI_API_BASE.format(model=model_id)}?key={GEMINI_API_KEY}"
@@ -69,7 +72,7 @@ def call_gemini(prompt):
                     time.sleep(wait)
                 else:
                     logger.error(f"Помилка {model_id}: {response.status_code} - {response.text}")
-                    break # Переходимо до наступної моделі
+                    break
             except Exception as e:
                 logger.error(f"Помилка запиту до {model_id}: {e}")
                 break
@@ -93,12 +96,10 @@ def generate_enigma():
     2. Сформулюй запитання про цю подію (наприклад: "В якому році...").
     3. Відповідь має бути ТІЛЬКИ JSON формату: {"question": "...", "answer": "YYYY"}.
     4. Ніяких діапазонів. Тільки JSON."""
-    text = call_gemini(prompt)
+    text = call_gemini(prompt, force_json=True)
     
     if text:
-        json_match = re.search(r'\{.*\}', text, re.DOTALL)
-        if json_match:
-            return json.loads(json_match.group())
+        return json.loads(text)
     return None
 
 def polybius_encode(text):
@@ -114,7 +115,6 @@ def polybius_encode(text):
                     found = True
                     break
             if found: break
-        if not found: encoded.append("??")
     return " ".join(encoded)
 
 def main():
@@ -122,6 +122,8 @@ def main():
     data = load_data()
     today = get_today()
     logger.info(f"Початок перевірки для дати: {today}")
+    
+    changed = False
 
     # Етап 1: Конфесія
     if data.get("confession_date") != today:
@@ -130,11 +132,10 @@ def main():
         if text:
             data["confession_text"] = text
             data["confession_date"] = today
-            save_data(data)
+            changed = True
             logger.info("Confession успішно оновлено.")
         else:
-            logger.error("Помилка генерації тексту конфесії.")
-            return
+            logger.error("Помилка генерації тексту конфесії. Пропускаємо до наступного запуску.")
     else:
         logger.info("Confession актуальна.")
 
@@ -145,26 +146,32 @@ def main():
         if enigma:
             data["enigma_data"] = {"question": enigma["question"], "answer": enigma["answer"]}
             data["enigma_date"] = today
-            save_data(data)
+            changed = True
             logger.info("Enigma успішно оновлено.")
         else:
-            logger.error("Помилка генерації шифру.")
-            return
+            logger.error("Помилка генерації шифру. Пропускаємо до наступного запуску.")
     else:
         logger.info("Enigma актуальна.")
 
-    # Етап 3: Кодування
-    if data.get("coding_date") != today:
+    # Етап 3: Кодування (залежить від того, чи є актуальна Enigma в data)
+    if data.get("coding_date") != today and "enigma_data" in data:
         logger.info("Coding застаріла. Оновлення...")
         encoded = polybius_encode(data["enigma_data"]["question"])
         data["encoded_question"] = encoded
         data["coding_date"] = today
-        save_data(data)
+        changed = True
         logger.info("Кодування успішно оновлено.")
     else:
-        logger.info("Кодування актуальне.")
+        logger.info("Кодування актуальне або відсутні дані для нього.")
 
-    logger.info("Всі етапи завершені успішно.")
+    # Фінальне збереження прогресу
+    if changed:
+        save_data(data)
+        logger.info("Файл контенту успішно збережено (зафіксовано оновлені етапи).")
+    else:
+        logger.info("Змін немає, файл не перезаписувався.")
+
+    logger.info("Роботу завершено.")
 
 if __name__ == "__main__":
     main()

@@ -39,10 +39,20 @@ def get_today():
     return datetime.now().strftime("%Y-%m-%d")
 
 def load_data():
+    """Безпечне завантаження JSON із захистом від порожніх файлів."""
     if not os.path.exists(CONTENT_FILE):
         return {}
-    with open(CONTENT_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    
+    try:
+        with open(CONTENT_FILE, 'r', encoding='utf-8') as f:
+            content = f.read().strip()
+            if not content:
+                logger.warning(f"Файл {CONTENT_FILE} порожній. Повертаємо порожній словник.")
+                return {}
+            return json.loads(content)
+    except json.JSONDecodeError:
+        logger.error(f"Помилка читання JSON з {CONTENT_FILE}. Файл пошкоджено. Скидаємо дані.")
+        return {}
 
 def save_data(data):
     with open(CONTENT_FILE, 'w', encoding='utf-8') as f:
@@ -114,7 +124,10 @@ def generate_enigma():
     text = call_gemini(prompt, force_json=True)
     
     if text:
-        return json.loads(text)
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            logger.error(f"ШІ повернув невалідний JSON: {text}")
     return None
 
 def polybius_encode(text):

@@ -482,13 +482,12 @@ function showUnlocked() {
     const shareBtn = document.getElementById('shareBtn');
     if (shareBtn) {
         shareBtn.onclick = async () => {
-            const text = "Сьогоднішнє зізнання у щоденнику успішно розгадано! Наше кохання безмежне. ❤️\n" + window.location.origin + window.location.pathname;
+            const text = "Сьогоднішнє зізнання у щоденнику успішно розгадано! Наше кохання безмежне. ❤️";
             if (navigator.share) {
                 try {
                     await navigator.share({
                         title: 'Твій Щоденник',
-                        text: text,
-                        url: window.location.href
+                        text: text
                     });
                 } catch (err) {
                     copyToClipboard(text);

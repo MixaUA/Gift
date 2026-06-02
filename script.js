@@ -189,11 +189,11 @@ if (diaryHeader && diarySection) {
 async function initDiary() {
     try {
         // Завантаження щоденника
-        const r = await fetch('/content.json?v=' + Date.now());
+        const r = await fetch('content.json?v=' + Date.now());
         diaryData = await r.json();
         
         // Завантаження привітання
-        const b = await fetch('/birthday.json?v=' + Date.now());
+        const b = await fetch('birthday.json?v=' + Date.now());
         const birthdayData = await b.json();
         const birthdayContent = document.getElementById('birthdayContent');
         if (birthdayContent) {

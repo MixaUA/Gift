@@ -483,8 +483,10 @@ function showUnlocked() {
     if (shareBtn) {
         shareBtn.onclick = async () => {
             const confession = diaryData.confession_text;
-            const replyInput = document.getElementById('replyInput');
-            const reply = replyInput ? replyInput.value.trim() : "";
+            
+            // Беремо текст безпосередньо з DOM-елемента повідомлення Віки
+            const vikaMessageEl = document.querySelector('.vika-text:last-of-type');
+            const reply = vikaMessageEl ? vikaMessageEl.textContent.trim() : "";
             
             let textToShare = `Михайло: "${confession}"`;
             if (reply) {

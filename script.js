@@ -249,7 +249,7 @@ function showLocked() {
     const modal = document.getElementById('cipherModal');
     const closeBtn = document.getElementById('closeModal');
 
-    if (encQuestion) encQuestion.textContent = diaryData.enigma_data.encoded_question;
+    if (encQuestion) encQuestion.textContent = diaryData.encoded_question;
     
     if (grid) {
         grid.innerHTML = '<div class="grid-cell label"></div>' + [1,2,3,4,5,6].map(n => `<div class="grid-cell label">${n}</div>`).join('');

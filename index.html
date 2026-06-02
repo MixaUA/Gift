@@ -3,49 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Зі святом!</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Вітаю крихітко!</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <div class="card">
-            <header>
-                <img src="media/Vika.png" alt="Віка" class="main-image">
-            </header>
-            
-            <main>
-                <div class="audio-player">
-                    <button id="playPauseBtn" class="play-btn">НАТИСНИ</button>
-                    <div class="progress-container">
-                        <div id="progress" class="progress-bar"></div>
+        <header>
+            <img src="media/Vika.png" alt="Віка" class="main-image">
+        </header>
+        <main>
+            <div class="audio-player">
+                <div class="audio-controls">
+                    <button id="playPauseBtn" class="control-btn" title="Відтворення / Пауза">
+                        <svg id="playIcon" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+                        <svg id="pauseIcon" class="hidden" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+                    <button id="stopBtn" class="control-btn" title="Зупинити">
+                        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>
+                    </button>
+                    <button id="loopBtn" class="control-btn" title="Повтор">
+                        <svg id="loopInactiveIcon" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M19 12a7 7 0 0 1-11.3 5.4M5 12a7 7 0 0 1 11.3-5.4"/>
+                            <path fill="currentColor" d="M19 8V5l4 4-4 4V8zM5 16v3l-4-4 4-4v3z"/>
+                        </svg>
+                        <svg id="loopActiveIcon" class="hidden" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M19 12a7 7 0 0 1-11.3 5.4M5 12a7 7 0 0 1 11.3-5.4"/>
+                            <path fill="currentColor" d="M19 8V5l4 4-4 4V8zM5 16v3l-4-4 4-4v3z"/>
+                            <text x="12" y="15" font-family="'Outfit', sans-serif" font-size="8" font-weight="900" text-anchor="middle" fill="currentColor">П</text>
+                        </svg>
+                    </button>
+                </div>
+                <div class="progress-container"><div id="progress" class="progress-bar"></div></div>
+            </div>
+
+            <div class="diary-section" id="birthdaySection">
+                <div class="diary-header" id="birthdayHeader">
+                    <h2 class="diary-title">З днем народження!</h2>
+                    <svg class="accordion-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                </div>
+                <div id="birthdayCollapse" class="diary-collapse">
+                    <div id="birthdayContent" class="diary-content">
+                        <div class="loading-text">Завантаження...</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="text-field">
-                    <p class="base-text">
-                        У щоденнику героїні роману "Одинадцять хвилин" є слова, які змушують серце на мить завмерти, а потім битися в іншому ритмі. Марія писала про те, що ми часто боїмося втратити людей, забуваючи про головну істину...
-                    </p>
-
-                    <blockquote class="blockquote-6">
-                        "Ніхто нікого не втрачає, бо ніхто нікому не належить. У цьому і є справжня свобода: мати те, що тобі найдорожче, але не володіти ним."
-                        <cite>— Пауло Коельйо</cite>
-                    </blockquote>
-
-                    <p class="base-text">
-                        Для мене ці рядки — про нас. Про те, що наше кохання не будує стін і не вимагає обіцянок-кайданів. Це дар — просто бути частиною твого світу, відчувати твоє світло і знати, що ми поруч не тому, що "мусимо", а тому, що так вирішили наші душі.
-                        <br><br>
-                        Дякую тобі за цю свободу бути собою поруч із тобою.
-                        <br><br>
-                        <span class="final-wish">З днем народження, крихітко!</span>
-                    </p>
+            <div class="diary-section" id="diarySection">
+                <div class="diary-header" id="diaryHeader">
+                    <h2 class="diary-title">Щоденник</h2>
+                    <svg class="accordion-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
                 </div>
-            </main>
-        </div>
+                <div id="diaryCollapse" class="diary-collapse">
+                    <div id="diaryContent" class="diary-content">
+                        <div class="loading-text">Завантаження...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer class="footer">&copy; <span id="year"></span> Mykhailo Anisimov</footer>
     </div>
 
+    <template id="lockedTemplate">
+        <div class="locked-view">
+            <div class="password-block">
+                <input type="text" id="diaryPassword" class="password-input">
+                <button id="unlockBtn" class="unlock-btn">ВІДКРИТИ</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="unlockedTemplate">
+        <div class="confession-box">
+            <div id="messagesList" class="message-container">
+                <div class="mykhailo-side">
+                    <div class="chat-header">
+                        <div class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                        <div><span class="chat-name">Михайло</span><br><span class="chat-status active typing">друкує...</span></div>
+                    </div>
+                    <div id="confessionText" class="confession-text"></div>
+                </div>
+            </div>
+            <div id="replyArea" class="reply-area hidden">
+                <textarea id="replyInput" class="reply-input" placeholder="Твоя відповідь..." rows="1"></textarea>
+                <button id="sendReplyBtn" class="send-btn" title="Відправити">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+            <div id="shareSection" class="hidden"><button id="shareBtn" class="share-btn">Поділитися моментом</button></div>
+            <div class="timer-wrapper">
+                <p class="timer-label">Повідомлення зникне через:</p>
+                <div class="flip-clock">
+                    <div class="flip-unit"><div class="flip-pair"><span id="t-h">00</span></div><span class="unit-desc">год</span></div>
+                    <div class="flip-sep">:</div>
+                    <div class="flip-unit"><div class="flip-pair"><span id="t-m">00</span></div><span class="unit-desc">хв</span></div>
+                    <div class="flip-sep">:</div>
+                    <div class="flip-unit"><div class="flip-pair"><span id="t-s">00</span></div><span class="unit-desc">сек</span></div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="expiredTemplate"><div class="expired-view"><p class="expired-text">Старі слова зникли у темряві...</p></div></template>
+    <div id="cipherModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button id="closeModal" class="close-modal">✕</button>
+            <div class="polybius-tools">
+                <div class="encoded-box">
+                    <span class="cipher-label">ЗАМОК:</span>
+                    <div id="encodedQuestion" class="encoded-text"></div>
+                </div>
+                <div id="polybiusGrid" class="polybius-mini-grid"></div>
+                <div class="scratchpad">
+                    <textarea id="scratchpadInput" placeholder="Твоя чернетка..." class="scratch-input" rows="1"></textarea>
+                    <button id="clearScratch" class="clear-btn">✕</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <audio id="giftAudio" src="media/Gift_audio.mp3"></audio>
     <script src="script.js"></script>
 </body>

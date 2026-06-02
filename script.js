@@ -481,21 +481,27 @@ function showUnlocked() {
     // Повністю робоча кнопка "Поділитися" з копіюванням у буфер обміну
     const shareBtn = document.getElementById('shareBtn');
     if (shareBtn) {
+    // Повністю робоча кнопка "Поділитися" з копіюванням у буфер обміну
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) {
         shareBtn.onclick = async () => {
-            const text = "Сьогоднішнє зізнання у щоденнику успішно розгадано! Наше кохання безмежне. ❤️";
+            const text = diaryData.confession_text;
+            const url = window.location.href;
             if (navigator.share) {
                 try {
                     await navigator.share({
                         title: 'Твій Щоденник',
-                        text: text
+                        text: text,
+                        url: url
                     });
                 } catch (err) {
-                    copyToClipboard(text);
+                    copyToClipboard(text + "\n" + url);
                 }
             } else {
-                copyToClipboard(text);
+                copyToClipboard(text + "\n" + url);
             }
         };
+    }
     }
 }
 

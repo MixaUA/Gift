@@ -481,29 +481,32 @@ function showUnlocked() {
     // Повністю робоча кнопка "Поділитися" з копіюванням у буфер обміну
     const shareBtn = document.getElementById('shareBtn');
     if (shareBtn) {
-    // Повністю робоча кнопка "Поділитися" з копіюванням у буфер обміну
-    const shareBtn = document.getElementById('shareBtn');
-    if (shareBtn) {
         shareBtn.onclick = async () => {
-            const text = diaryData.confession_text;
+            const confession = diaryData.confession_text;
+            const replyInput = document.getElementById('replyInput');
+            const reply = replyInput ? replyInput.value.trim() : "";
+            
+            let textToShare = `Михайло: "${confession}"`;
+            if (reply) {
+                textToShare += `\n\nВіка: "${reply}"`;
+            }
             const url = window.location.href;
+
             if (navigator.share) {
                 try {
                     await navigator.share({
                         title: 'Твій Щоденник',
-                        text: text,
+                        text: textToShare,
                         url: url
                     });
                 } catch (err) {
-                    copyToClipboard(text + "\n" + url);
+                    copyToClipboard(textToShare + "\n\n" + url);
                 }
             } else {
-                copyToClipboard(text + "\n" + url);
+                copyToClipboard(textToShare + "\n\n" + url);
             }
         };
     }
-    }
-}
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {

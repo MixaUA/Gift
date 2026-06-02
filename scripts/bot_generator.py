@@ -1,6 +1,5 @@
 import json
 import os
-import re
 import logging
 import time
 import requests
@@ -14,6 +13,7 @@ logger = logging.getLogger(__name__)
 CONTENT_FILE = 'content.json'
 BIRTHDAY_FILE = 'birthday.json'
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 def init_files():
     """Створення порожніх шаблонів, якщо файли відсутні."""
@@ -27,14 +27,13 @@ def init_files():
         with open(BIRTHDAY_FILE, 'w', encoding='utf-8') as f:
             json.dump({"text": "Вітаю з днем народження!"}, f)
 
-# Каскад моделей
-GEMINI_MODELS = [
+# Глобальний стан черги моделей (пам'ять між викликами)
+MODELS_STATE = [
     "gemini-2.0-flash", 
     "gemini-2.5-flash",
     "gemini-2.5-flash-lite",
     "gemini-2.0-flash-lite",
 ]
-GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 def get_today():
     return datetime.now().strftime("%Y-%m-%d")
@@ -50,41 +49,57 @@ def save_data(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def call_gemini(prompt, force_json=False):
-    """Виклик Gemini з каскадом моделей та обробкою лімітів."""
+    """Виклик Gemini з динамічним зсувом черги моделей при 429/503."""
+    global MODELS_STATE
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     if force_json:
         payload["generationConfig"] = {"responseMimeType": "application/json"}
     
-    for model_id in GEMINI_MODELS:
+    # Працюємо по стабільній копії поточної черги
+    current_queue = list(MODELS_STATE)
+    
+    for model_id in current_queue:
         url = f"{GEMINI_API_BASE.format(model=model_id)}?key={GEMINI_API_KEY}"
         logger.info(f"Спроба з моделлю: {model_id}")
         
-        for attempt in range(3):
-            try:
-                response = requests.post(url, json=payload, timeout=30)
-                if response.status_code == 200:
-                    result = response.json()
-                    text = result['candidates'][0]['content']['parts'][0]['text']
-                    return text
-                elif response.status_code in (429, 503):
-                    wait = (attempt + 1) * 30
-                    logger.warning(f"Модель {model_id} зайнята ({response.status_code}), чекаю {wait}с.")
-                    time.sleep(wait)
-                else:
-                    logger.error(f"Помилка {model_id}: {response.status_code} - {response.text}")
-                    break
-            except Exception as e:
-                logger.error(f"Помилка запиту до {model_id}: {e}")
-                break
+        try:
+            response = requests.post(url, json=payload, timeout=30)
+            if response.status_code == 200:
+                result = response.json()
+                text = result['candidates'][0]['content']['parts'][0]['text']
+                return text
+            
+            elif response.status_code in (429, 503):
+                logger.warning(f"Модель {model_id} зайнята ({response.status_code}). Переміщуємо в кінець черги.")
+                if model_id in MODELS_STATE:
+                    MODELS_STATE.remove(model_id)
+                    MODELS_STATE.append(model_id)
+                continue # Миттєво переходим до наступної моделі без сну!
+                
+            else:
+                logger.error(f"Помилка {model_id}: {response.status_code} - {response.text}")
+                if model_id in MODELS_STATE:
+                    MODELS_STATE.remove(model_id)
+                    MODELS_STATE.append(model_id)
+                continue
+                
+        except Exception as e:
+            logger.error(f"Помилка запиту до {model_id}: {e}")
+            continue
+            
     return None
 
 def generate_confession():
-    logger.info("Генерація нового зізнання...")
+    logger.info("Генерація нового зізнання для Вікторії...")
     prompt = """
-    Напиши коротке (3-4 речення), дуже інтимне, літературне зізнання в коханні.
-    - Використай у тексті одну влучну, глибоку цитату про кохання від відомих класиків літератури або поетів.
-    - Цитата повинна бути органічно вплетена в інтимний текст.
-    - Без зайвого пафосу, максимально близько, ніби шепіт на вушко.
+    Напиши дуже коротке (строго 2-3 речення) романтичне, але зріле зізнання в коханні дружині Вікторії від чоловіка Михайла. Вони разом уже понад 20 років, тому текст має бути глибоким, спокійним і затишним, без підліткового пафосу чи надриву.
+    
+    СУВОРІ ПРАВИЛА:
+    1. Грамматика: Тільки від першої особи чоловічого роду (я) до жінки (ти, твоя, кохана, рідна). ЖОДНИХ слешів на кшталт "думав/думала".
+    2. Стиль: Проста, жива, сучасна українська мова. Текст має звучати так, ніби чоловік обійняв дружину вранці на кухні і тихо сказав це на вушко.
+    3. Табу на слова: "єство", "буття", "доля", "океан", "всесвіт", "промовляти", "мій дорогий". 
+    4. Зміст: Натякни на цінність прожитих разом років, на те, що її посмішка чи погляд досі є найнадійнішим і найріднішим домом у світі.
+    5. Ніяких вигаданих чи прямих цитат класиків у лапках — просто цілісний, щирий текст від серця.
     """
     text = call_gemini(prompt)
     return text.strip() if text else None
@@ -93,7 +108,7 @@ def generate_enigma():
     logger.info("Генерація нового шифру...")
     prompt = """Загадай подію, пов'язану з коханням або романтикою (книга, вірш, пісня, картина).
     1. Подія повинна мати одну, чітко визначену дату створення або публікації (рік, 4 цифри).
-    2. Сформулюй запитання про цю подію (наприклад: "В якому році...").
+    2. Сформулюй запитання про цю подію українською мовою (наприклад: "В якому році...").
     3. Відповідь має бути ТІЛЬКИ JSON формату: {"question": "...", "answer": "YYYY"}.
     4. Ніяких діапазонів. Тільки JSON."""
     text = call_gemini(prompt, force_json=True)
@@ -103,7 +118,15 @@ def generate_enigma():
     return None
 
 def polybius_encode(text):
-    grid = [['А','Б','В','Г','Ґ','Д'],['Е','Є','Ж','З','И','І'],['Ї','Й','К','Л','М','Н'],['О','П','Р','С','Т','У'],['Ф','Х','Ц','Ч','Ш','Щ'],['Ь','Ю','Я','.',',',' ']]
+    # Повернули знаки на місце: 64 - крапка, 65 - кома, 66 - пробіл
+    grid = [
+        ['А','Б','В','Г','Ґ','Д'],
+        ['Е','Є','Ж','З','И','І'],
+        ['Ї','Й','К','Л','М','Н'],
+        ['О','П','Р','С','Т','У'],
+        ['Ф','Х','Ц','Ч','Ш','Щ'],
+        ['Ь','Ю','Я','.',',',' ']
+    ]
     
     encoded = []
     for char in text.upper():
@@ -153,7 +176,7 @@ def main():
     else:
         logger.info("Enigma актуальна.")
 
-    # Етап 3: Кодування (залежить від того, чи є актуальна Enigma в data)
+    # Етап 3: Кодування
     if data.get("coding_date") != today and "enigma_data" in data:
         logger.info("Coding застаріла. Оновлення...")
         encoded = polybius_encode(data["enigma_data"]["question"])

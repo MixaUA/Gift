@@ -506,11 +506,11 @@ function showUnlocked() {
                 }
             } else {
                 copyToClipboard(textToShare + "\n\n" + url);
+            };
             }
-        };
-    }
+            } // <--- ЦЯ ДУЖКА БУЛА ПРОПУЩЕНА
 
-function copyToClipboard(text) {
+            function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
         const shareBtn = document.getElementById('shareBtn');
         if (shareBtn) {

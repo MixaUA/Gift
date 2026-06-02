@@ -188,12 +188,14 @@ if (diaryHeader && diarySection) {
 
 async function initDiary() {
     try {
+        const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+        
         // Завантаження щоденника
-        const r = await fetch('content.json?v=' + Date.now());
+        const r = await fetch(`${basePath}/content.json?v=${Date.now()}`);
         diaryData = await r.json();
         
         // Завантаження привітання
-        const b = await fetch('birthday.json?v=' + Date.now());
+        const b = await fetch(`${basePath}/birthday.json?v=${Date.now()}`);
         const birthdayData = await b.json();
         const birthdayContent = document.getElementById('birthdayContent');
         if (birthdayContent) {

@@ -1,0 +1,35 @@
+name: Daily Content Update
+on:
+  schedule:
+    # Запуск щодня кожні 15 хвилин після опівночі (з 00:00 до 00:45)
+    - cron: '0,15,30,45 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-content:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install google-genai
+
+      - name: Run Bot Generator
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/bot_generator.py
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "feat(data): щоденне оновлення контенту"
+          file_pattern: "content.json"

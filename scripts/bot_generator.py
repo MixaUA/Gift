@@ -29,8 +29,7 @@ def init_files():
 
 # Глобальний стан черги моделей (тепер із новітньою Gemini 3.1)
 MODELS_STATE = [
-    "gemini-3.1-flash-lite",   # Перше місце: найновіша, швидка і найкраще розуміє правила промптів
-    "gemini-2.0-flash", 
+    "gemini-3.1-flash-lite",
     "gemini-2.5-flash",
     "gemini-2.5-flash-lite",
     "gemini-2.0-flash-lite",

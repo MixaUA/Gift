@@ -227,7 +227,7 @@ async function initDiary() {
         }
     } catch (e) { 
         const content = document.getElementById('diaryContent');
-        if (content) content.innerHTML = 'Помилка завантаження щоденника'; 
+        if (content) content.innerHTML = '<div class="expired-view"><p class="expired-text">Щоденник зараз не на зв\'язку. Спробуймо трішки пізніше...</p></div>'; 
     }
 }
 

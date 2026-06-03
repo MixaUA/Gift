@@ -467,7 +467,6 @@ function showUnlocked() {
             if (text) {
                 const messagesList = document.getElementById('messagesList');
                 if (messagesList) {
-                    // Аватарка Віки зроблена ідентичною аватарці Михайла
                     messagesList.innerHTML += `<div class="vika-message"><div class="chat-header"><div class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><span class="chat-name">Віка</span><br><span class="chat-status online">в мережі</span></div></div><div class="vika-text">${text}</div></div>`;
                 }
                 const replyArea = document.getElementById('replyArea');
@@ -478,7 +477,7 @@ function showUnlocked() {
         };
     }
 
-// Кнопка "Поділитися" з копіюванням у буфер обміну
+    // Кнопка "Поділитися" з копіюванням у буфер обміну
     const shareBtn = document.getElementById('shareBtn');
     if (shareBtn) {
         shareBtn.onclick = async () => {
@@ -507,7 +506,7 @@ function showUnlocked() {
             }
         };
     }
-} // <--- Ця дужка чітко закриває функцію showUnlocked()
+} // <--- Тепер функція showUnlocked закривається СУВОРО тут і не конфліктує з іншим кодом
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {

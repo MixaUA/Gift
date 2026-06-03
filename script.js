@@ -210,39 +210,35 @@ async function initDiary() {
         }
         if (birthdaySection) birthdaySection.classList.add('open');
     } catch (e) {
-        console.error('birthday.json помилка:', e);
+        // Помилка завантаження статичного привітання
     }
 
     // --- content.json: динамічний, падіння не зачіпає birthday ---
     try {
-        console.log("Завантаження щоденника...");
         const r = await fetch('./content.json?v=' + Date.now());
         if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
         const rawText = await r.text();
         if (!rawText || !rawText.trim()) throw new Error('content.json порожній');
         diaryData = JSON.parse(rawText);
-        console.log("Дані щоденника завантажено:", diaryData);
 
-        const today = new Date().toISOString().split('T')[0];
-        console.log("Сьогоднішня дата:", today);
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
         if (localStorage.getItem('diary_date') !== today) {
             localStorage.removeItem('diary_unlocked');
+            localStorage.removeItem('confession_read');
+            localStorage.removeItem('confession_reply');
             localStorage.setItem('diary_date', today);
         }
 
-        if (!diaryData.confession_date || diaryData.confession_date !== today) {
-            console.log("Контент застарів або відсутній, показуємо заглушку.");
+        if (!diaryData.coding_date || diaryData.coding_date !== today) {
             showTemplate('expiredTemplate');
         } else if (localStorage.getItem('diary_unlocked') === 'true') {
-            console.log("Щоденник розблоковано.");
             showUnlocked();
         } else {
-            console.log("Щоденник заблоковано.");
             showLocked();
         }
     } catch (e) {
-        console.error("Помилка завантаження щоденника:", e);
         const content = document.getElementById('diaryContent');
         if (content) content.innerHTML = `<div class="expired-view"><p class="expired-text">Щоденник зараз не на зв’язку. Спробуймо трішки пізніше...</p></div>`;
     }
@@ -275,14 +271,13 @@ function showLocked() {
         encQuestion.style.textAlign = 'left';
     }
 
-    // Закреслення токенів за кількістю токенів у чернетці (розбиваємо по пробілах)
+    // Закреслення токенів за кількістю токенів у чернетці (символ за символом)
     function updateStrikethrough() {
         if (!encQuestion || !scratch) return;
-        // Рахуємо кількість заповнених токенів: слова + 1 якщо є незакінчене слово
-        const val = scratch.value;
-        const parts = val.split(' ');
-        // Кількість закреслених токенів = кількість частин (включно з незакінченою)
-        const count = val.length === 0 ? 0 : parts.length;
+        
+        // Кількість закреслених токенів тепер дорівнює загальній кількості символів у чернетці
+        const count = scratch.value.length;
+        
         encQuestion.querySelectorAll('span').forEach((span, i) => {
             if (i < count) {
                 span.style.textDecoration = 'line-through';
@@ -424,32 +419,48 @@ function showUnlocked() {
     const replyArea = document.getElementById('replyArea');
     const fullText = diaryData.confession_text;
     
-    if (container) container.textContent = '';
+    // Перевірка стану чату
+    const isRead = localStorage.getItem('confession_read') === 'true';
+    const savedReply = localStorage.getItem('confession_reply');
+
+    if (container) container.textContent = isRead ? fullText : '';
     if (status) {
         status.textContent = 'не в мережі';
         status.className = 'chat-status';
     }
     
+    // Відновлення чату, якщо вже була відповідь
+    if (isRead && replyArea) {
+        if (savedReply) {
+            const messagesList = document.getElementById('messagesList');
+            if (messagesList) {
+                messagesList.innerHTML += `<div class="vika-message"><div class="chat-header"><div class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><span class="chat-name">Віка</span><br><span class="chat-status online">в мережі</span></div></div><div class="vika-text">${savedReply}</div></div>`;
+            }
+            const shareSection = document.getElementById('shareSection');
+            if (shareSection) shareSection.classList.remove('hidden');
+            replyArea.classList.add('hidden');
+        } else {
+            replyArea.classList.remove('hidden');
+        }
+    }
+    
     const wait = (ms) => new Promise(r => setTimeout(r, ms));
     
     async function runChatFlow() {
-        // 1. Спочатку не в мережі (2 секунди)
+        // ... (код без змін)
         await wait(2000);
         
-        // 2. В мережі (3.5 секунди затримка для реалістичного очікування читання)
         if (status) {
             status.textContent = 'в мережі';
             status.className = 'chat-status online';
         }
         await wait(3500);
         
-        // 3. Пише...
         if (status) {
             status.textContent = 'пише...';
             status.className = 'chat-status typing';
         }
         
-        // 4. Повільний набір (на порядок повільніше)
         let i = 0;
         if (container) container.classList.add('typing');
         
@@ -457,21 +468,15 @@ function showUnlocked() {
             if (i < fullText.length) {
                 if (container) container.textContent += fullText.charAt(i); 
                 i++;
-                // 150мс - 320мс для реалістичної затримки набору
                 setTimeout(typeWriter, 150 + Math.random() * 170);
             } else { 
                 if (container) container.classList.remove('typing'); 
-                
-                // 5. В мережі -> Щойно
+                localStorage.setItem('confession_read', 'true');
                 if (status) {
                     status.textContent = 'щойно';
                     status.className = 'chat-status online';
                 }
-                
-                // Показуємо поле відповіді
                 if (replyArea) replyArea.classList.remove('hidden');
-                
-                // 6. Через 5 секунд - знову не в мережі
                 setTimeout(() => {
                     if (status) {
                         status.textContent = 'не в мережі';
@@ -483,7 +488,9 @@ function showUnlocked() {
         typeWriter();
     }
     
-    runChatFlow();
+    if (!isRead) {
+        runChatFlow();
+    }
     
     function startCountdown() {
         const h = document.getElementById('t-h'), m = document.getElementById('t-m'), s = document.getElementById('t-s');
@@ -520,9 +527,11 @@ function showUnlocked() {
             const replyInput = document.getElementById('replyInput');
             const text = replyInput ? replyInput.value.trim() : '';
             if (text) {
+                // Зберігаємо відповідь у пам'ять браузера
+                localStorage.setItem('confession_reply', text);
+                
                 const messagesList = document.getElementById('messagesList');
                 if (messagesList) {
-                    // Аватарка Віки зроблена ідентичною аватарці Михайла
                     messagesList.innerHTML += `<div class="vika-message"><div class="chat-header"><div class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><span class="chat-name">Віка</span><br><span class="chat-status online">в мережі</span></div></div><div class="vika-text">${text}</div></div>`;
                 }
                 const replyArea = document.getElementById('replyArea');

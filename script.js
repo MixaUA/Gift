@@ -266,62 +266,94 @@ function showLocked() {
     const modal = document.getElementById('cipherModal');
     const closeBtn = document.getElementById('closeModal');
 
-    if (encQuestion) encQuestion.textContent = diaryData.encoded_question;
-    
+    // Рендер encodedQuestion як окремих <span> для закреслення
+    if (encQuestion) {
+        const chars = diaryData.encoded_question.split('');
+        encQuestion.innerHTML = chars.map((ch, i) =>
+            `<span data-idx="${i}">${ch === ' ' ? '&nbsp;' : ch}</span>`
+        ).join('');
+    }
+
+    // Закреслення символів за кількістю введених у чернетку
+    function updateStrikethrough() {
+        if (!encQuestion || !scratch) return;
+        const count = scratch.value.length;
+        encQuestion.querySelectorAll('span').forEach((span, i) => {
+            if (i < count) {
+                span.style.textDecoration = 'line-through';
+                span.style.opacity = '0.35';
+            } else {
+                span.style.textDecoration = '';
+                span.style.opacity = '';
+            }
+        });
+    }
+
     if (grid) {
-        grid.innerHTML = '<div class="grid-cell label"></div>' + [1,2,3,4,5,6].map(n => `<div class="grid-cell label">${n}</div>`).join('');
+        // Будуємо сітку одним проходом без += в циклі
+        let gridHTML = '<div class="grid-cell label"></div>' +
+            [1,2,3,4,5,6].map(n => `<div class="grid-cell label">${n}</div>`).join('');
         gridData.forEach((row, i) => {
-            grid.innerHTML += `<div class="grid-cell label">${i+1}</div>`;
+            gridHTML += `<div class="grid-cell label">${i+1}</div>`;
             row.forEach((char, j) => {
-                grid.innerHTML += `<div class="grid-cell" data-char="${char}" data-code="${i+1}${j+1}">${char === ' ' ? '␣' : char}</div>`;
+                gridHTML += `<div class="grid-cell" data-char="${char}" data-code="${i+1}${j+1}">${char === ' ' ? '␣' : char}</div>`;
             });
         });
+        grid.innerHTML = gridHTML;
 
         // Інтерактивна анімація сітки Полібія при натисканні
-        grid.onclick = (e) => {
+        grid.addEventListener('click', (e) => {
             const cell = e.target;
             if (!cell.classList.contains('grid-cell') || cell.classList.contains('label')) return;
-            
+
             const char = cell.getAttribute('data-char');
             const code = cell.getAttribute('data-code');
-            
+
+            // Скидаємо попередню анімовану клітинку
             if (activeAnimatingCell && activeAnimatingCell !== cell) {
                 clearInterval(activeAnimationInterval);
                 const prevChar = activeAnimatingCell.getAttribute('data-char');
                 activeAnimatingCell.textContent = prevChar === ' ' ? '␣' : prevChar;
                 activeAnimatingCell.classList.remove('active-highlight');
+                // Скидаємо inline-стиль щоб hover не прилипав на мобільному
+                activeAnimatingCell.style.background = '';
+                activeAnimatingCell.style.color = '';
                 delete activeAnimatingCell.dataset.animating;
             }
-            
+
             if (cell.dataset.animating === 'true') return;
             cell.dataset.animating = 'true';
             cell.classList.add('active-highlight');
             activeAnimatingCell = cell;
-            
+
             let secondsPassed = 0;
             const displayChar = char === ' ' ? '␣' : char;
-            
+
             activeAnimationInterval = setInterval(() => {
                 secondsPassed += 2;
                 if (secondsPassed >= 10) {
                     clearInterval(activeAnimationInterval);
                     cell.textContent = displayChar;
                     cell.classList.remove('active-highlight');
+                    // Явно скидаємо inline-стиль — фікс для мобільного hover-прилипання
+                    cell.style.background = '';
+                    cell.style.color = '';
+                    cell.style.borderColor = '';
+                    cell.style.transform = '';
                     delete cell.dataset.animating;
                     if (activeAnimatingCell === cell) activeAnimatingCell = null;
                 } else {
-                    if (cell.textContent === displayChar) {
-                        cell.textContent = code;
-                    } else {
-                        cell.textContent = displayChar;
-                    }
+                    cell.textContent = cell.textContent === displayChar ? code : displayChar;
                 }
             }, 2000);
-        };
+        });
     }
 
     if (scratch) {
-        scratch.addEventListener('input', () => autoResize(scratch));
+        scratch.addEventListener('input', () => {
+            autoResize(scratch);
+            updateStrikethrough();
+        });
     }
 
     const clearScratchBtn = document.getElementById('clearScratch');
@@ -330,6 +362,7 @@ function showLocked() {
             if (scratch) {
                 scratch.value = '';
                 autoResize(scratch);
+                updateStrikethrough();
                 scratch.focus();
             }
         });

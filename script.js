@@ -187,17 +187,13 @@ if (diaryHeader && diarySection) {
 }
 
 async function initDiary() {
+    // --- birthday.json: статичний, завантажуємо першим і незалежно ---
     try {
-        console.log("Початок завантаження даних...");
-        // Завантаження щоденника
-        const r = await fetch('./content.json?v=' + Date.now());
-        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
-        diaryData = await r.json();
-        console.log("Дані завантажено:", diaryData);
-        
-        // Завантаження привітання
         const b = await fetch('./birthday.json?v=' + Date.now());
-        const birthdayData = await b.json();
+        if (!b.ok) throw new Error(`HTTP ${b.status}`);
+        const bText = await b.text();
+        if (!bText || !bText.trim()) throw new Error('birthday.json порожній');
+        const birthdayData = JSON.parse(bText);
         const birthdayContent = document.getElementById('birthdayContent');
         if (birthdayContent) {
             birthdayContent.innerHTML = `
@@ -212,33 +208,43 @@ async function initDiary() {
                 </div>
             `;
         }
-
-        // Відкриваємо секцію привітання за замовчуванням
         if (birthdaySection) birthdaySection.classList.add('open');
+    } catch (e) {
+        console.error('birthday.json помилка:', e);
+    }
+
+    // --- content.json: динамічний, падіння не зачіпає birthday ---
+    try {
+        console.log("Завантаження щоденника...");
+        const r = await fetch('./content.json?v=' + Date.now());
+        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+        const rawText = await r.text();
+        if (!rawText || !rawText.trim()) throw new Error('content.json порожній');
+        diaryData = JSON.parse(rawText);
+        console.log("Дані щоденника завантажено:", diaryData);
 
         const today = new Date().toISOString().split('T')[0];
         console.log("Сьогоднішня дата:", today);
-        
-        if (localStorage.getItem('diary_date') !== today) { 
-            localStorage.removeItem('diary_unlocked'); 
-            localStorage.setItem('diary_date', today); 
+
+        if (localStorage.getItem('diary_date') !== today) {
+            localStorage.removeItem('diary_unlocked');
+            localStorage.setItem('diary_date', today);
         }
-        
-        // Додаємо перевірку існування confession_date
-        if (!diaryData.confession_date || diaryData.confession_date !== today) { 
+
+        if (!diaryData.confession_date || diaryData.confession_date !== today) {
             console.log("Контент застарів або відсутній, показуємо заглушку.");
-            showTemplate('expiredTemplate'); 
-        } else if (localStorage.getItem('diary_unlocked') === 'true') { 
+            showTemplate('expiredTemplate');
+        } else if (localStorage.getItem('diary_unlocked') === 'true') {
             console.log("Щоденник розблоковано.");
-            showUnlocked(); 
-        } else { 
+            showUnlocked();
+        } else {
             console.log("Щоденник заблоковано.");
-            showLocked(); 
+            showLocked();
         }
-    } catch (e) { 
-        console.error("Помилка в initDiary:", e);
+    } catch (e) {
+        console.error("Помилка завантаження щоденника:", e);
         const content = document.getElementById('diaryContent');
-        if (content) content.innerHTML = '<div class="expired-view"><p class="expired-text">Щоденник зараз не на зв\'язку. Спробуймо трішки пізніше...</p></div>'; 
+        if (content) content.innerHTML = '<div class="expired-view"><p class="expired-text">Щоденник зараз не на зв'язку. Спробуймо трішки пізніше...</p></div>';
     }
 }
 

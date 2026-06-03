@@ -266,18 +266,23 @@ function showLocked() {
     const modal = document.getElementById('cipherModal');
     const closeBtn = document.getElementById('closeModal');
 
-    // Рендер encodedQuestion як окремих <span> для закреслення
+    // Рендер encodedQuestion як пар-токенів <span> для закреслення без розриву
     if (encQuestion) {
-        const chars = diaryData.encoded_question.split('');
-        encQuestion.innerHTML = chars.map((ch, i) =>
-            `<span data-idx="${i}">${ch === ' ' ? '&nbsp;' : ch}</span>`
+        const tokens = diaryData.encoded_question.trim().split(' ');
+        encQuestion.innerHTML = tokens.map((token, i) =>
+            `<span style="white-space:nowrap;display:inline-block;margin-right:0.35em">${token}</span>`
         ).join('');
+        encQuestion.style.textAlign = 'left';
     }
 
-    // Закреслення символів за кількістю введених у чернетку
+    // Закреслення токенів за кількістю токенів у чернетці (розбиваємо по пробілах)
     function updateStrikethrough() {
         if (!encQuestion || !scratch) return;
-        const count = scratch.value.length;
+        // Рахуємо кількість заповнених токенів: слова + 1 якщо є незакінчене слово
+        const val = scratch.value;
+        const parts = val.split(' ');
+        // Кількість закреслених токенів = кількість частин (включно з незакінченою)
+        const count = val.length === 0 ? 0 : parts.length;
         encQuestion.querySelectorAll('span').forEach((span, i) => {
             if (i < count) {
                 span.style.textDecoration = 'line-through';

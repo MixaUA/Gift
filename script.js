@@ -479,36 +479,33 @@ function showUnlocked() {
     }
 
 // Повністю робоча кнопка "Поділитися" з копіюванням у буфер обміну
-    const shareBtn = document.getElementById('shareBtn');
-    if (shareBtn) {
-        shareBtn.onclick = async () => {
-            const confession = diaryData.confession_text;
-            
-            // Беремо текст безпосередньо з DOM-елемента повідомлення Віки
-            const vikaMessageEl = document.querySelector('.vika-text:last-of-type');
-            const reply = vikaMessageEl ? vikaMessageEl.textContent.trim() : "";
-            
-            let textToShare = `Михайло: "${confession}"`;
-            if (reply) {
-                textToShare += `\n\nВіка: "${reply}"`;
-            }
-            const url = window.location.href;
+const shareBtn = document.getElementById('shareBtn');
+if (shareBtn) {
+    shareBtn.onclick = async () => {
+        const confession = diaryData.confession_text;
+        
+        // Беремо текст безпосередньо з DOM-елемента повідомлення Віки
+        const vikaMessageEl = document.querySelector('.vika-text:last-of-type');
+        const reply = vikaMessageEl ? vikaMessageEl.textContent.trim() : "";
+        
+        let textToShare = `Михайло: "${confession}"`;
+        if (reply) {
+            textToShare += `\n\nВіка: "${reply}"`;
+        }
 
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'Щоденник',
-                        text: textToShare,
-                        url: url
-                    });
-                } catch (err) {
-                    copyToClipboard(textToShare + "\n\n" + url);
-                }
-            } else {
-                copyToClipboard(textToShare + "\n\n" + url);
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Твій Щоденник',
+                    text: textToShare
+                });
+            } catch (err) {
+                copyToClipboard(textToShare);
             }
-        };
-    }
+        } else {
+            copyToClipboard(textToShare);
+        }
+    };
 }
 
 function copyToClipboard(text) {

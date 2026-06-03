@@ -165,40 +165,35 @@ if (audio) {
 }
 
 function toggleAccordion(sectionToOpen) {
-    const birthdaySection = document.getElementById('birthdaySection');
-    const diarySection = document.getElementById('diarySection');
-    
-    if (!birthdaySection || !diarySection) return;
-
     if (sectionToOpen === birthdaySection) {
         birthdaySection.classList.add('open');
         diarySection.classList.remove('open');
+        // Прокрутка до початку секції
         birthdaySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else if (sectionToOpen === diarySection) {
         diarySection.classList.add('open');
         birthdaySection.classList.remove('open');
+        // Прокрутка до початку секції
         diarySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
 
-// Ініціалізація кліків акордеону з безпечним пошуком елементів
-const birthdayHeader = document.getElementById('birthdayHeader');
-const birthdaySection = document.getElementById('birthdaySection');
 if (birthdayHeader && birthdaySection) {
     birthdayHeader.addEventListener('click', () => toggleAccordion(birthdaySection));
 }
 
-const diaryHeader = document.getElementById('diaryHeader');
-const diarySection = document.getElementById('diarySection');
 if (diaryHeader && diarySection) {
     diaryHeader.addEventListener('click', () => toggleAccordion(diarySection));
 }
 
 async function initDiary() {
     try {
-        // Завантаження щоденника - прості відносні шляхи
+        console.log("Початок завантаження даних...");
+        // Завантаження щоденника
         const r = await fetch('./content.json?v=' + Date.now());
+        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
         diaryData = await r.json();
+        console.log("Дані завантажено:", diaryData);
         
         // Завантаження привітання
         const b = await fetch('./birthday.json?v=' + Date.now());
@@ -219,22 +214,29 @@ async function initDiary() {
         }
 
         // Відкриваємо секцію привітання за замовчуванням
-        const currentBirthdaySection = document.getElementById('birthdaySection');
-        if (currentBirthdaySection) currentBirthdaySection.classList.add('open');
+        if (birthdaySection) birthdaySection.classList.add('open');
 
         const today = new Date().toISOString().split('T')[0];
+        console.log("Сьогоднішня дата:", today);
+        
         if (localStorage.getItem('diary_date') !== today) { 
             localStorage.removeItem('diary_unlocked'); 
             localStorage.setItem('diary_date', today); 
         }
-        if (diaryData.confession_date !== today) { 
+        
+        // Додаємо перевірку існування confession_date
+        if (!diaryData.confession_date || diaryData.confession_date !== today) { 
+            console.log("Контент застарів або відсутній, показуємо заглушку.");
             showTemplate('expiredTemplate'); 
         } else if (localStorage.getItem('diary_unlocked') === 'true') { 
+            console.log("Щоденник розблоковано.");
             showUnlocked(); 
         } else { 
+            console.log("Щоденник заблоковано.");
             showLocked(); 
         }
     } catch (e) { 
+        console.error("Помилка в initDiary:", e);
         const content = document.getElementById('diaryContent');
         if (content) content.innerHTML = '<div class="expired-view"><p class="expired-text">Щоденник зараз не на зв\'язку. Спробуймо трішки пізніше...</p></div>'; 
     }
@@ -487,7 +489,7 @@ function showUnlocked() {
         };
     }
 
-    // Повністю робоча кнопка "Поділитися" з копіюванням у буфер обміну
+// Повністю робоча кнопка "Поділитися" з копіюванням у буфер обміну
     const shareBtn = document.getElementById('shareBtn');
     if (shareBtn) {
         shareBtn.onclick = async () => {

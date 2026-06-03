@@ -1,5 +1,5 @@
 :root {
-    --bg-app: #00b3b3;
+    --bg-app: #ffffff;
     --card-bg: #ffffff;
     --text-primary: #1a1a1a;
     --text-secondary: #6c757d;
@@ -63,7 +63,8 @@ header {
     max-width: 300px;
     height: auto;
     border-radius: 20px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    box-shadow: none;
+    background: transparent;
     transition: none;
 }
 

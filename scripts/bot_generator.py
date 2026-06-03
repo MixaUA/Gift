@@ -5,29 +5,25 @@ import time
 import requests
 from datetime import datetime
 import zoneinfo
-# Конфігурація логування
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Конфігурація моделі та файлів
 CONTENT_FILE = 'content.json'
 BIRTHDAY_FILE = 'birthday.json'
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 def init_files():
-    """Створення порожніх шаблонів, якщо файли відсутні."""
     if not os.path.exists(CONTENT_FILE):
         logger.info(f"Створення порожнього {CONTENT_FILE}")
         with open(CONTENT_FILE, 'w', encoding='utf-8') as f:
             json.dump({}, f)
-    
     if not os.path.exists(BIRTHDAY_FILE):
         logger.info(f"Створення порожнього {BIRTHDAY_FILE}")
         with open(BIRTHDAY_FILE, 'w', encoding='utf-8') as f:
             json.dump({"text": "Вітаю з днем народження!"}, f)
 
-# Глобальний стан черги моделей
 MODELS_STATE = [
     "gemini-3.1-flash-lite",
     "gemini-2.5-flash",
@@ -36,7 +32,6 @@ MODELS_STATE = [
 ]
 
 def get_today():
-    """Повертає поточну дату суворо за київським часом (Europe/Kyiv) для синхронізації з фронтендом."""
     try:
         kyiv_tz = zoneinfo.ZoneInfo("Europe/Kyiv")
         return datetime.now(kyiv_tz).strftime("%Y-%m-%d")
@@ -45,10 +40,8 @@ def get_today():
         return datetime.now().strftime("%Y-%m-%d")
 
 def load_data():
-    """Безпечне завантаження JSON із захистом від порожніх файлів."""
     if not os.path.exists(CONTENT_FILE):
         return {}
-    
     try:
         with open(CONTENT_FILE, 'r', encoding='utf-8') as f:
             content = f.read().strip()
@@ -65,47 +58,38 @@ def save_data(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def call_gemini(prompt, force_json=False):
-    """Виклик Gemini з динамічним зсувом черги моделей при 429/503."""
     global MODELS_STATE
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     if force_json:
         payload["generationConfig"] = {"responseMimeType": "application/json"}
-    
-    # Працюємо по стабільній копії поточної черги
     current_queue = list(MODELS_STATE)
-    
     for model_id in current_queue:
         url = f"{GEMINI_API_BASE.format(model=model_id)}?key={GEMINI_API_KEY}"
         logger.info(f"Спроба з моделлю: {model_id}")
-        
         try:
             response = requests.post(url, json=payload, timeout=30)
             if response.status_code == 200:
                 result = response.json()
                 text = result['candidates'][0]['content']['parts'][0]['text']
                 return text
-            
             elif response.status_code in (429, 503):
                 logger.warning(f"Модель {model_id} зайнята ({response.status_code}). Переміщуємо в кінець черги.")
                 if model_id in MODELS_STATE:
                     MODELS_STATE.remove(model_id)
                     MODELS_STATE.append(model_id)
-                continue # Миттєво переходимо до наступної моделі без сну!
-                
+                continue
             else:
                 logger.error(f"Помилка {model_id}: {response.status_code} - {response.text}")
                 if model_id in MODELS_STATE:
                     MODELS_STATE.remove(model_id)
                     MODELS_STATE.append(model_id)
                 continue
-                
         except Exception as e:
             logger.error(f"Помилка запиту до {model_id}: {e}")
             continue
-            
     return None
 
-def generate_confession():
+def generate_confession(previous_confession=None):
     logger.info("Генерація нового зізнання...")
     prompt = """
     Напиши коротке (строго 4-5 речень) романтичне, ніжне зізнання в коханні дружині від чоловіка. Текст має бути глибоким, спокійним і затишним, без підліткового пафосу чи надриву.
@@ -120,6 +104,15 @@ def generate_confession():
     7. Табу на слова: "єство", "буття", "доля", "океан почуттів", "всесвіт", "промовляти", "мій дорогий".
     8. Без вигаданих цитат класиків у лапках — просто щирі, прості слова про те, що її посмішка та погляд — це його найрідніший дім.
     """
+    if previous_confession:
+        prompt += f"""
+    9. КРИТИЧНЕ ТАБУ НА ПОВТОРЕННЯ: Минулого разу ти написав ось цей текст:
+    ---
+    "{previous_confession}"
+    ---
+    Твоє завдання — написати абсолютно ІНШЕ за змістом та метафорами зізнання. 
+    ЗАБОРОНЕНО використовувати ті самі ключові порівняння, схожу структуру речень або ті самі синоніми, що були вчора. Зміни кут думки (наприклад, якщо вчора було про погляд і тишу, сьогодні напиши про її сміх, ранкову каву, спільні плани чи тепло її рук).
+    """
     text = call_gemini(prompt)
     return text.strip() if text else None
 
@@ -131,7 +124,6 @@ def generate_enigma():
     3. Відповідь має бути ТІЛЬКИ JSON формату: {"question": "...", "answer": "YYYY"}.
     4. Ніяких діапазонів. Тільки JSON."""
     text = call_gemini(prompt, force_json=True)
-    
     if text:
         try:
             return json.loads(text)
@@ -148,7 +140,6 @@ def polybius_encode(text):
         ['Ф','Х','Ц','Ч','Ш','Щ'],
         ['Ь','Ю','Я','.',',',' ']
     ]
-    
     encoded = []
     for char in text.upper():
         found = False
@@ -166,13 +157,15 @@ def main():
     data = load_data()
     today = get_today()
     logger.info(f"Початок перевірки для дати: {today}")
-    
     changed = False
 
     # Етап 1: Конфесія
     if data.get("confession_date") != today:
         logger.info("Confession застаріла. Оновлення...")
-        text = generate_confession()
+        old_confession = data.get("confession_text")
+        if old_confession:
+            logger.info("Знайдено попереднє зізнання. Передаємо його для уникнення повторів.")
+        text = generate_confession(previous_confession=old_confession)
         if text:
             data["confession_text"] = text
             data["confession_date"] = today
@@ -208,7 +201,6 @@ def main():
     else:
         logger.info("Кодування актуальне або відсутні дані для нього.")
 
-    # Фінальне збереження прогресу
     if changed:
         save_data(data)
         logger.info("Файл контенту успішно збережено (зафіксовано оновлені етапи).")

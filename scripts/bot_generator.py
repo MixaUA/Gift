@@ -155,7 +155,7 @@ def generate_confession(previous_confession=None, previous_topic=None):
 
     return text, topic
 
-def generate_enigma(previous_author=None):
+def generate_enigma(recent_authors=None):
     logger.info("Генерація нового шифру...")
 
     prompt = """Загадай відомий твір, пов'язаний з коханням або романтикою.
@@ -167,9 +167,11 @@ def generate_enigma(previous_author=None):
     4. Питання формулюй українською: "В якому році...", "Коли вперше...", "У якому році написав...".
     """
 
-    if previous_author:
+    if recent_authors:
+        authors_str = ", ".join(f'"{a}"' for a in recent_authors)
         prompt += f"""
-    5. ТАБУ НА АВТОРА: Минулого разу був автор "{previous_author}". Сьогодні ОБОВ'ЯЗКОВО обери іншого автора з іншої країни і жанру.
+    5. ТАБУ НА АВТОРІВ: Нещодавно вже були: {authors_str}.
+       Обери автора якого НЕМАЄ в цьому списку. Інша країна, інший жанр.
     """
 
     prompt += """
@@ -239,16 +241,18 @@ def main():
     # Етап 2: Питання/Відповідь (Enigma)
     if data.get("enigma_date") != today:
         logger.info("Enigma застаріла. Оновлення...")
-        old_author = data.get("enigma_author")
-        if old_author:
-            logger.info(f"Знайдено вчорашнього автора: '{old_author}'. Передаємо для уникнення повторів.")
-        enigma = generate_enigma(previous_author=old_author)
+        recent_authors = data.get("enigma_authors_recent", [])
+        if recent_authors:
+            logger.info(f"Останні автори: {recent_authors}. Передаємо для уникнення повторів.")
+        enigma = generate_enigma(recent_authors=recent_authors)
         if enigma:
             data["enigma_data"] = {"question": enigma["question"], "answer": enigma["answer"]}
             data["enigma_date"] = today
             if enigma.get("author"):
-                data["enigma_author"] = enigma["author"]
-                logger.info(f"Автора збережено: '{enigma['author']}'")
+                new_author = enigma["author"]
+                recent_authors = ([new_author] + recent_authors)[:7]
+                data["enigma_authors_recent"] = recent_authors
+                logger.info(f"Автора збережено: '{new_author}'. Список останніх: {recent_authors}")
             changed = True
             logger.info("Enigma успішно оновлено.")
         else:

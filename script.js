@@ -509,20 +509,18 @@ function showUnlocked() {
             if (reply) {
                 textToShare += `\n\nВіка: "${reply}"`;
             }
-            const url = window.location.href;
 
             if (navigator.share) {
                 try {
                     await navigator.share({
                         title: 'Щоденник',
-                        text: textToShare,
-                        url: url
+                        text: textToShare
                     });
                 } catch (err) {
-                    copyToClipboard(textToShare + "\n\n" + url);
+                    copyToClipboard(textToShare);
                 }
             } else {
-                copyToClipboard(textToShare + "\n\n" + url);
+                copyToClipboard(textToShare);
             }
         };
     }
